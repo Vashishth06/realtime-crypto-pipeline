@@ -1,0 +1,7 @@
+api:
+  base_url: "https://api.coingecko.com/api/v3"
+  requests_per_minute: 10
+  timeout: 10
+
+logging:
+  level: "INFO"

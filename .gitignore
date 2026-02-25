@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.env
+config/local.yaml
+data/
+test_api.py
+docs/interview-questions.md
+test_*.py

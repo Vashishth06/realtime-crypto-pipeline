@@ -1,0 +1,5 @@
+api:
+  requests_per_minute: 30  # Faster in prod
+
+logging:
+  level: "ERROR"  # Only errors in prod
