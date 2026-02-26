@@ -1,0 +1,8 @@
+catalog:
+  default:
+    type: sql
+    uri: sqlite:///F:/realtime-crypto-pipeline/catalog.db
+    warehouse: s3://bronze/
+    s3.endpoint: http://localhost:9000
+    s3.access-key-id: minioadmin
+    s3.secret-access-key: minioadmin

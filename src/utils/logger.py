@@ -21,8 +21,10 @@ def setup_logger(name: str, level: str = "INFO") -> logging.Logger:
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(getattr(logging, level.upper()))
 
-    log_dir = Path("logs")
-    log_dir.mkdir(exist_ok=True)  # Create logs folder
+    # Compute project root (go up from utils/ → src/ → root/)
+    PROJECT_ROOT = Path(__file__).parent.parent.parent
+    log_dir = PROJECT_ROOT / "logs"
+    log_dir.mkdir(exist_ok=True)
 
     # Create file handler and set level
     fh = logging.FileHandler(log_dir / f"{name}.log")

@@ -1,0 +1,7 @@
+requests
+pyyaml
+pyiceberg
+pyarrow
+s3fs
+sqlalchemy
+boto3

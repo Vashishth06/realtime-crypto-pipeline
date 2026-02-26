@@ -13,5 +13,3 @@ End-to-end data engineering project processing cryptocurrency market data
 ## Setup
 (coming soon...)
 
-## Progress Log
-- **Day 1:** API client + error handling 

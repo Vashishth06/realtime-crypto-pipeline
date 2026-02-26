@@ -6,3 +6,7 @@ data/
 test_api.py
 docs/interview-questions.md
 test_*.py
+logs/*
+config/secrets.yaml
+catalog.db
+*.db

@@ -1,6 +1,10 @@
 import time
 from functools import wraps
 
+from src.utils.logger import setup_logger
+
+logger = setup_logger(__name__)
+
 def retry_with_backoff(max_retries=3, initial_delay=1.0, exceptions=(Exception,)):
     """
     Decorator to retry a function with exponential backoff.
@@ -24,7 +28,7 @@ def retry_with_backoff(max_retries=3, initial_delay=1.0, exceptions=(Exception,)
                     return func(*args, **kwargs)
                 except exceptions as e:
                     last_exception = e
-                    print(f"Error: {e}. Retrying in {current_delay} seconds...")
+                    logger.warning(f"Error: {e}. Retrying in {current_delay} seconds...")
                     time.sleep(current_delay)
                     retries += 1
                     current_delay *= 2  # Exponential backoff
