@@ -20,8 +20,12 @@ class MinIOConfig:
     warehouse_path: str
 
 @dataclass
-class SupabaseConfig:
-    connection_string: str
+class PostgresConfig:
+    host: str
+    port: int
+    database: str
+    user: str
+    password: str
 
 class Config:
     def __init__(self, env: str = "dev"):
@@ -50,7 +54,7 @@ class Config:
         self.api_config = APIConfig(**merged_config.get("api", {}))
         self.logging_config = LoggingConfig(**merged_config.get("logging", {}))
         self.minio_config = MinIOConfig(**merged_config.get("minio", {}))
-        self.supabase_config = SupabaseConfig(**merged_config.get("supabase", {}))
+        self.postgres = PostgresConfig(**merged_config.get('postgres', {}))
 
     def _load_yaml(self, path: Path) -> dict:
         """Load YAML file and return as dict"""

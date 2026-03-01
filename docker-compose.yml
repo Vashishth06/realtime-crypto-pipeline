@@ -1,0 +1,30 @@
+services:
+
+  postgres:
+    image: postgres:15
+    container_name: iceberg-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: iceberg
+      POSTGRES_PASSWORD: iceberg
+      POSTGRES_DB: iceberg
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+
+  trino:
+    image: trinodb/trino:latest
+    container_name: trino
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+    volumes:
+      - ./trino/etc:/etc/trino
+      - ./trino-data:/var/trino

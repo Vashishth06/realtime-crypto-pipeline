@@ -14,7 +14,6 @@ logger = setup_logger(__name__)
 class IcebergWriter:
     def __init__(self, env: str = "dev"):
         self.config = Config(env=env)
-        self.warehouse_path = "s3://bronze/warehouse"
         self.catalog = self._init_catalog()
     
     def _init_catalog(self) -> SqlCatalog:
@@ -22,8 +21,8 @@ class IcebergWriter:
         catalog = SqlCatalog(
             "crypto_catalog",
             **{
-                "uri": "sqlite:///./catalog.db",
-                "warehouse": self.warehouse_path,
+                "uri": f"postgresql+psycopg2://{self.config.postgres.user}:{self.config.postgres.password}@{self.config.postgres.host}:{self.config.postgres.port}/{self.config.postgres.database}?options=-csearch_path%3Diceberg",
+                "warehouse": self.config.minio_config.warehouse_path,
                 "s3.endpoint": f"http://{self.config.minio_config.endpoint}",
                 "s3.access-key-id": self.config.minio_config.access_key,
                 "s3.secret-access-key": self.config.minio_config.secret_key,
@@ -43,7 +42,7 @@ class IcebergWriter:
             logger.debug(f"Namespace '{namespace}' already exists")
 
         # Create table location
-        table_location = f"{self.warehouse_path}/{namespace}/{table_name}"
+        table_location = f"{self.config.minio_config.warehouse_path}/{namespace}/{table_name}"
         
         # Create table
         try:
