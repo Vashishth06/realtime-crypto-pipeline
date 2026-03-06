@@ -13,4 +13,5 @@ catalog.db
 pgdata/
 trino-data/
 airflow-pgdata/
-*.log
+*.logs
+dbt_profiles/.user.yml
