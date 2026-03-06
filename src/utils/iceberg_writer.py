@@ -2,18 +2,22 @@
 Reusable Iceberg table writer for Bronze/Silver/Gold layers
 """
 
+import botocore
+import botocore.exceptions
 from pyiceberg.catalog.sql import SqlCatalog
 from pyiceberg.schema import Schema
 from pyiceberg.table import Table
 import pyarrow as pa
 from src.utils.logger import setup_logger
-from src.utils.config import Config
+from src.utils.config import MinIOConfig, PostgresConfig
+from src.utils.retry import retry_with_backoff
 
 logger = setup_logger(__name__)
 
 class IcebergWriter:
-    def __init__(self, env: str = "dev"):
-        self.config = Config(env=env)
+    def __init__(self, minio_config: MinIOConfig, postgres_config: PostgresConfig):
+        self.minio_config = minio_config
+        self.postgres_config = postgres_config
         self.catalog = self._init_catalog()
     
     def _init_catalog(self) -> SqlCatalog:
@@ -21,11 +25,13 @@ class IcebergWriter:
         catalog = SqlCatalog(
             "crypto_catalog",
             **{
-                "uri": f"postgresql+psycopg2://{self.config.postgres.user}:{self.config.postgres.password}@{self.config.postgres.host}:{self.config.postgres.port}/{self.config.postgres.database}?options=-csearch_path%3Diceberg",
-                "warehouse": self.config.minio_config.warehouse_path,
-                "s3.endpoint": f"http://{self.config.minio_config.endpoint}",
-                "s3.access-key-id": self.config.minio_config.access_key,
-                "s3.secret-access-key": self.config.minio_config.secret_key,
+                "uri": f"postgresql+psycopg2://{self.postgres_config.user}:{self.postgres_config.password}@{self.postgres_config.host}:{self.postgres_config.port}/{self.postgres_config.database}?options=-csearch_path%3Diceberg",
+                "warehouse": self.minio_config.warehouse_path,
+                "s3.endpoint": f"http://{self.minio_config.endpoint}",
+                "s3.access-key-id": self.minio_config.access_key,
+                "s3.secret-access-key": self.minio_config.secret_key,
+                "s3.path-style-access": "true",
+                "s3.region": "us-east-1"
             }
         )
         logger.info("Iceberg catalog initialized")
@@ -42,7 +48,7 @@ class IcebergWriter:
             logger.debug(f"Namespace '{namespace}' already exists")
 
         # Create table location
-        table_location = f"{self.config.minio_config.warehouse_path}/{namespace}/{table_name}"
+        table_location = f"{self.minio_config.warehouse_path}/{namespace}/{table_name}"
         
         # Create table
         try:
@@ -57,6 +63,14 @@ class IcebergWriter:
             logger.info(f"Table '{namespace}.{table_name}' already exists")
             return self.catalog.load_table(f"{namespace}.{table_name}")
         
+    @retry_with_backoff(
+        max_attempts=3,
+        initial_delay=2.0,  # give MinIO more time
+        exceptions=(
+            botocore.exceptions.EndpointResolutionError,
+            botocore.exceptions.ClientError
+        )
+    )
     def write_data(self, namespace: str, table_name: str, data: pa.Table) -> None:
         """
         Write PyArrow table to Iceberg table.
@@ -95,9 +109,9 @@ class IcebergWriter:
         
         s3 = boto3.client(
             's3',
-            endpoint_url=f"http://{self.config.minio_config.endpoint}",
-            aws_access_key_id=self.config.minio_config.access_key,
-            aws_secret_access_key=self.config.minio_config.secret_key
+            endpoint_url=f"http://{self.minio_config.endpoint}",
+            aws_access_key_id=self.minio_config.access_key,
+            aws_secret_access_key=self.minio_config.secret_key
         )
         
         # Delete all objects in warehouse/namespace/

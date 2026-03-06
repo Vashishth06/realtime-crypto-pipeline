@@ -5,7 +5,7 @@ class CoinDetailsIngestor(BaseBronzeIngestor):
     Ingests coin details data from the API to the "coin_details_raw" Iceberg table.
     """
     
-    def run(self, coin_id: str):
+    def run(self, coin_id: str="bitcoin"):
         data = self.client.get_coin_details(coin_id)
 
         records = [{

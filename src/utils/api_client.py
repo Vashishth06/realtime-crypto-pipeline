@@ -46,7 +46,7 @@ class CryptoAPIClient:
     # ============================================================
 
     @retry_with_backoff(
-        max_retries=3,
+        max_attempts=3,
         initial_delay=2.0,
         exceptions=(requests.exceptions.ConnectionError,
                     requests.exceptions.Timeout,

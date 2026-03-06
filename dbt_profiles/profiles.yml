@@ -1,0 +1,12 @@
+crypto_dbt:
+  target: dev
+  outputs:
+    dev:
+      type: trino
+      method: none
+      host: trino
+      port: 8080
+      user: admin
+      database: "iceberg"
+      schema: silver
+      threads: 1

@@ -35,20 +35,18 @@ class Config:
         # Load base config
         base_config = self._load_yaml(config_dir / "base.yaml")
 
-        # Load env config
-        env_config_path = config_dir / f"{env}.yaml"
-        env_config = None
-        if env_config_path.exists():
-            env_config = self._load_yaml(env_config_path)
-
-        # Merge them
-        merged_config = self._deep_merge(base_config, env_config or {})
-
-        # Load secrets and merge (overrides all)
+        # Load secrets
+        merged_config = base_config.copy()
         secrets_path = config_dir / "secrets.yaml"
         if secrets_path.exists():
             secrets = self._load_yaml(secrets_path)
             merged_config = self._deep_merge(merged_config, secrets)
+
+        # Load env config (takes precedence over secrets)
+        env_config_path = config_dir / f"{env}.yaml"
+        if env_config_path.exists():
+            env_config = self._load_yaml(env_config_path)
+            merged_config = self._deep_merge(merged_config, env_config)
 
         # Create typed objects
         self.api_config = APIConfig(**merged_config.get("api", {}))

@@ -1,0 +1,12 @@
+postgres:
+  host: "iceberg-postgres"
+  port: 5432
+  database: "iceberg"
+  user: "iceberg"
+  password: "iceberg"
+
+minio:
+  endpoint: "host.docker.internal:9000"
+  access_key: "minioadmin"
+  secret_key: "minioadmin"
+  warehouse_path: "s3://bronze/warehouse"

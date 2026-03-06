@@ -1,0 +1,8 @@
+pyiceberg[sql-postgres,s3]
+pyarrow
+dbt-core
+dbt-trino
+requests
+pyyaml
+boto3
+psycopg2-binary

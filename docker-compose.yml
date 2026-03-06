@@ -12,6 +12,96 @@ services:
       - "5432:5432"
     volumes:
       - ./pgdata:/var/lib/postgresql/data
+    networks:
+      - crypto-network
+
+  airflow-postgres:
+    image: postgres:15
+    container_name: airflow-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - ./airflow-pgdata:/var/lib/postgresql/data
+    networks:
+      - crypto-network
+
+  airflow-init:
+    build: .
+    container_name: airflow-init
+    depends_on:
+      - airflow-postgres
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres:5432/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    command: db init
+    networks:
+      - crypto-network
+
+  airflow-webserver:
+    build: .
+    container_name: airflow-webserver
+    restart: always
+    depends_on:
+      - airflow-postgres
+      - airflow-init
+    ports:
+      - "8081:8080"
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres:5432/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__WEBSERVER__SECRET_KEY: crypto_pipeline_secret
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs/airflow:/opt/airflow/logs
+      - ./src:/opt/airflow/src
+      - ./config:/opt/airflow/config
+      - ./crypto_dbt:/opt/airflow/crypto_dbt
+      - ./dbt_profiles:/opt/airflow/dbt_profiles
+    command: webserver
+    networks:
+      - crypto-network
+
+  airflow-scheduler:
+    build: .
+    container_name: airflow-scheduler
+    restart: always
+    depends_on:
+      - airflow-postgres
+      - airflow-init
+    # --- ADD THIS BLOCK TO FIX DNS TIMEOUTS ---
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "bronze.host.docker.internal:host-gateway"
+    # ------------------------------------------
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres:5432/airflow
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__WEBSERVER__SECRET_KEY: crypto_pipeline_secret
+      # --- ADDED: Injecting Pipeline Secrets & Network Routing ---
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_HOST: postgres  # Points to the Postgres container
+      DB_PORT: 5432
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_ENDPOINT: host.docker.internal:9000  # Points to MinIO on your Windows host
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs/airflow:/opt/airflow/logs
+      - ./src:/opt/airflow/src
+      - ./config:/opt/airflow/config
+      - ./crypto_dbt:/opt/airflow/crypto_dbt
+      - ./dbt_profiles:/opt/airflow/dbt_profiles
+    command: scheduler
+    networks:
+      - crypto-network
 
   trino:
     image: trinodb/trino:latest
@@ -28,3 +118,9 @@ services:
     volumes:
       - ./trino/etc:/etc/trino
       - ./trino-data:/var/trino
+    networks:
+      - crypto-network
+
+networks:
+  crypto-network:
+    driver: bridge

@@ -12,3 +12,5 @@ catalog.db
 *.db
 pgdata/
 trino-data/
+airflow-pgdata/
+*.log

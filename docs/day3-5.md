@@ -1,4 +1,4 @@
-# Day 3: Trino Query Engine + Postgres Metastore
+# Day 3-5: Trino Query Engine + Postgres Metastore
 
 ## What We Built
 

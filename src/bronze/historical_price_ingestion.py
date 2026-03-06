@@ -5,7 +5,7 @@ class HistoricalPricesIngestor(BaseBronzeIngestor):
     Ingests historical price data from the API to the "historical_prices_raw" Iceberg table.
     """
 
-    def run(self, coin_id: str, days=30):
+    def run(self, coin_id: str="bitcoin", days=30):
         data = self.client.get_historical_prices(coin_id, days=days)
 
         records = [{
